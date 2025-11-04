@@ -44,8 +44,14 @@ function LeadScorer() {
       return;
     }
 
+    if (!leadData.industry) {
+      setError('Please select an industry');
+      return;
+    }
+
     setLoading(true);
     setError('');
+    setResult(null);
 
     try {
       const response = await apiClient.post('/tasks/lead-score', {
@@ -55,9 +61,18 @@ function LeadScorer() {
         }
       });
 
-      setResult(response.data.result);
+      if (response.data && response.data.result) {
+        setResult(response.data.result);
+      } else {
+        setError('Invalid response from server');
+      }
     } catch (err) {
-      setError('Failed to score lead: ' + (err.response?.data?.detail || err.message));
+      const errorMessage = err.response?.data?.detail || 
+                          err.response?.data?.error || 
+                          err.message || 
+                          'An unexpected error occurred';
+      setError('Failed to score lead: ' + errorMessage);
+      console.error('Lead scoring error:', err);
     } finally {
       setLoading(false);
     }

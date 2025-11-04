@@ -29,9 +29,15 @@ function Dashboard() {
   const fetchTasks = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/tasks`);
-      setTasks(response.data.tasks);
+      if (response.data && Array.isArray(response.data.tasks)) {
+        setTasks(response.data.tasks);
+      } else {
+        console.warn('Invalid tasks data format:', response.data);
+        setTasks([]);
+      }
     } catch (error) {
       console.error('Error fetching tasks:', error);
+      setTasks([]);
     }
   };
 
@@ -109,18 +115,35 @@ function Dashboard() {
         </Typography>
         
         <Grid container spacing={2}>
-          {tasks.slice(0, 5).map((task, index) => (
-            <Grid item xs={12} key={index}>
+          {tasks && tasks.length > 0 ? (
+            tasks.slice(0, 5).map((task, index) => (
+              <Grid item xs={12} key={task.task_id || index}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6">{task.task_id || 'Unknown Task'}</Typography>
+                    <Typography color="text.secondary">
+                      Status: {task.status || 'Unknown'}
+                    </Typography>
+                    {task.timestamp && (
+                      <Typography variant="caption" color="text.secondary">
+                        {new Date(task.timestamp).toLocaleString()}
+                      </Typography>
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))
+          ) : (
+            <Grid item xs={12}>
               <Card>
                 <CardContent>
-                  <Typography variant="h6">{task.task_id}</Typography>
                   <Typography color="text.secondary">
-                    Status: {task.status}
+                    No recent tasks found. Start using the automation tools above!
                   </Typography>
                 </CardContent>
               </Card>
             </Grid>
-          ))}
+          )}
         </Grid>
       </Container>
     </>

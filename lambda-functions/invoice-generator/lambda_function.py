@@ -61,28 +61,39 @@ def generate_invoice(client_info, items):
         invoice_number = f"INV-{uuid.uuid4().hex[:8].upper()}"
         
         # Validate and calculate totals
+        if not items:
+            raise ValueError("Items list cannot be empty")
+        
         validated_items = []
         subtotal = 0
         
         for item in items:
-            quantity = float(item.get('quantity', 0))
-            price = float(item.get('price', 0))
+            try:
+                quantity = float(item.get('quantity', 0))
+                price = float(item.get('price', 0))
+            except (ValueError, TypeError) as e:
+                raise ValueError(f"Invalid quantity or price format for item: {item.get('description', 'Unknown')}") from e
             
-            if quantity <= 0 or price < 0:
-                raise ValueError(f"Invalid quantity or price for item: {item.get('description', 'Unknown')}")
+            if quantity <= 0:
+                raise ValueError(f"Quantity must be greater than 0 for item: {item.get('description', 'Unknown')}")
             
+            if price < 0:
+                raise ValueError(f"Price cannot be negative for item: {item.get('description', 'Unknown')}")
+            
+            item_total = round(quantity * price, 2)
             validated_items.append({
                 'description': item.get('description', 'No description'),
                 'quantity': quantity,
                 'price': price,
-                'total': round(quantity * price, 2)
+                'total': item_total
             })
             
-            subtotal += quantity * price
+            subtotal += item_total
         
-        tax_rate = 0.08
-        tax_amount = subtotal * tax_rate
-        total = subtotal + tax_amount
+        # Tax rate should be configurable
+        tax_rate = 0.08  # 8% tax - consider making this configurable
+        tax_amount = round(subtotal * tax_rate, 2)
+        total = round(subtotal + tax_amount, 2)
         
         now = datetime.now(timezone.utc)
         

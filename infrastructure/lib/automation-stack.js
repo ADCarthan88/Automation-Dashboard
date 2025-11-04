@@ -14,24 +14,36 @@ class AutomationStack extends Stack {
     });
 
     const emailParserFunction = new lambda.Function(this, 'EmailParserFunction', {
-      runtime: lambda.Runtime.PYTHON_3_9,
+      runtime: lambda.Runtime.PYTHON_3_13,
       handler: 'lambda_function.lambda_handler',
       code: lambda.Code.fromAsset('../lambda-functions/email-parser'),
       timeout: Duration.seconds(30),
+      memorySize: 256,
+      environment: {
+        LOG_LEVEL: 'INFO'
+      }
     });
 
     const invoiceGeneratorFunction = new lambda.Function(this, 'InvoiceGeneratorFunction', {
-      runtime: lambda.Runtime.PYTHON_3_9,
+      runtime: lambda.Runtime.PYTHON_3_13,
       handler: 'lambda_function.lambda_handler',
       code: lambda.Code.fromAsset('../lambda-functions/invoice-generator'),
       timeout: Duration.seconds(30),
+      memorySize: 256,
+      environment: {
+        LOG_LEVEL: 'INFO'
+      }
     });
 
     const leadScorerFunction = new lambda.Function(this, 'LeadScorerFunction', {
-      runtime: lambda.Runtime.PYTHON_3_9,
+      runtime: lambda.Runtime.PYTHON_3_13,
       handler: 'lambda_function.lambda_handler',
       code: lambda.Code.fromAsset('../lambda-functions/lead-scorer'),
       timeout: Duration.seconds(30),
+      memorySize: 256,
+      environment: {
+        LOG_LEVEL: 'INFO'
+      }
     });
 
     tasksTable.grantReadWriteData(emailParserFunction);

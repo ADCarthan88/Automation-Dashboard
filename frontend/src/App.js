@@ -6,6 +6,7 @@ import Dashboard from './components/Dashboard';
 import EmailParser from './components/EmailParser';
 import InvoiceGenerator from './components/InvoiceGenerator';
 import LeadScorer from './components/LeadScorer';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const theme = createTheme({
   palette: {
@@ -21,17 +22,19 @@ const theme = createTheme({
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Router>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/email-parser" element={<EmailParser />} />
-          <Route path="/invoice-generator" element={<InvoiceGenerator />} />
-          <Route path="/lead-scorer" element={<LeadScorer />} />
-        </Routes>
-      </Router>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Router>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/email-parser" element={<EmailParser />} />
+            <Route path="/invoice-generator" element={<InvoiceGenerator />} />
+            <Route path="/lead-scorer" element={<LeadScorer />} />
+          </Routes>
+        </Router>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

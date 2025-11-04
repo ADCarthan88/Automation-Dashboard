@@ -11,8 +11,9 @@ echo [2/3] Waiting for backend to start...
 timeout /t 5 /nobreak > nul
 
 echo.
-echo [3/3] Starting Frontend...
+echo [3/3] Frontend will run on port 3003...
 cd ..\frontend
+set PORT=3003
 start "Frontend" cmd /k "npm start"
 
 echo.
@@ -20,12 +21,12 @@ echo ========================================
 echo   AUTOMATION DASHBOARD DEMO READY!
 echo ========================================
 echo.
-echo Frontend: http://localhost:3000
+echo Frontend: http://localhost:3003
 echo Backend API: http://localhost:8000
 echo API Docs: http://localhost:8000/docs
 echo.
 echo Press any key to open browser...
 pause > nul
 
-start http://localhost:3000
+start http://localhost:3003
 start http://localhost:8000/docs

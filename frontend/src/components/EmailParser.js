@@ -27,6 +27,7 @@ function EmailParser() {
 
     setLoading(true);
     setError('');
+    setResult(null);
 
     try {
       const response = await apiClient.post('/tasks/email-parse', {
@@ -36,9 +37,18 @@ function EmailParser() {
         }
       });
 
-      setResult(response.data.result);
+      if (response.data && response.data.result) {
+        setResult(response.data.result);
+      } else {
+        setError('Invalid response from server');
+      }
     } catch (err) {
-      setError('Failed to parse email: ' + (err.response?.data?.detail || err.message));
+      const errorMessage = err.response?.data?.detail || 
+                          err.response?.data?.error || 
+                          err.message || 
+                          'An unexpected error occurred';
+      setError('Failed to parse email: ' + errorMessage);
+      console.error('Email parse error:', err);
     } finally {
       setLoading(false);
     }

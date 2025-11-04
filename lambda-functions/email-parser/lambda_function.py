@@ -100,8 +100,8 @@ def determine_priority(content):
     high_priority_keywords = ['urgent', 'asap', 'critical', 'emergency']
     content_lower = content.lower()
     
-    for keyword in high_priority_keywords:
-        if keyword in content_lower:
-            return 'high'
+    # More efficient approach using any() instead of loop
+    if any(keyword in content_lower for keyword in high_priority_keywords):
+        return 'high'
     
     return 'normal'

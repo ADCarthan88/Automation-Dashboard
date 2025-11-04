@@ -44,6 +44,7 @@ function InvoiceGenerator() {
 
     setLoading(true);
     setError('');
+    setResult(null);
 
     try {
       const response = await apiClient.post('/tasks/invoice-generate', {
@@ -54,9 +55,18 @@ function InvoiceGenerator() {
         }
       });
 
-      setResult(response.data.result);
+      if (response.data && response.data.result) {
+        setResult(response.data.result);
+      } else {
+        setError('Invalid response from server');
+      }
     } catch (err) {
-      setError('Failed to generate invoice: ' + (err.response?.data?.detail || err.message));
+      const errorMessage = err.response?.data?.detail || 
+                          err.response?.data?.error || 
+                          err.message || 
+                          'An unexpected error occurred';
+      setError('Failed to generate invoice: ' + errorMessage);
+      console.error('Invoice generation error:', err);
     } finally {
       setLoading(false);
     }
@@ -67,9 +77,20 @@ function InvoiceGenerator() {
   };
 
   const updateItem = (index, field, value) => {
+    if (index < 0 || index >= items.length) {
+      console.error('Invalid item index:', index);
+      return;
+    }
     const newItems = [...items];
     newItems[index][field] = value;
     setItems(newItems);
+  };
+
+  const removeItem = (index) => {
+    if (items.length > 1) {
+      const newItems = items.filter((_, i) => i !== index);
+      setItems(newItems);
+    }
   };
 
   return (
