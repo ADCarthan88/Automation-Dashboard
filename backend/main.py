@@ -8,6 +8,7 @@ import asyncio
 from datetime import datetime, timezone
 import logging
 import os
+from mock_responses import mock_email_parse, mock_invoice_generate, mock_lead_score
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -25,11 +26,11 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization"],
 )
 
-# AWS Lambda client with error handling
+# AWS Lambda client with error handling (fallback to mock for demo)
 try:
     lambda_client = boto3.client('lambda', region_name=os.getenv('AWS_REGION', 'us-east-1'))
 except Exception as e:
-    logger.error(f"Failed to initialize AWS Lambda client: {e}")
+    logger.warning(f"AWS Lambda client not available, using mock responses: {e}")
     lambda_client = None
 
 class TaskRequest(BaseModel):
@@ -58,19 +59,19 @@ async def get_tasks():
 async def parse_email(request: TaskRequest, background_tasks: BackgroundTasks):
     task_id = f"email_{datetime.now(timezone.utc).timestamp()}"
     
-    if not lambda_client:
-        logger.error("Lambda client not initialized")
-        raise HTTPException(status_code=503, detail="Service unavailable")
-    
     try:
         logger.info(f"Processing email parse request: {task_id}")
-        response = lambda_client.invoke(
-            FunctionName='email-parser',
-            InvocationType='RequestResponse',
-            Payload=json.dumps(request.parameters)
-        )
         
-        result = json.loads(response['Payload'].read())
+        if lambda_client:
+            response = lambda_client.invoke(
+                FunctionName='email-parser',
+                InvocationType='RequestResponse',
+                Payload=json.dumps(request.parameters)
+            )
+            result = json.loads(response['Payload'].read())
+        else:
+            # Use mock response for demo
+            result = {'body': mock_email_parse()}
         
         task = TaskResponse(
             task_id=task_id,
@@ -98,19 +99,19 @@ async def parse_email(request: TaskRequest, background_tasks: BackgroundTasks):
 async def generate_invoice(request: TaskRequest):
     task_id = f"invoice_{datetime.now(timezone.utc).timestamp()}"
     
-    if not lambda_client:
-        logger.error("Lambda client not initialized")
-        raise HTTPException(status_code=503, detail="Service unavailable")
-    
     try:
         logger.info(f"Processing invoice generation: {task_id}")
-        response = lambda_client.invoke(
-            FunctionName='invoice-generator',
-            InvocationType='RequestResponse',
-            Payload=json.dumps(request.parameters)
-        )
         
-        result = json.loads(response['Payload'].read())
+        if lambda_client:
+            response = lambda_client.invoke(
+                FunctionName='invoice-generator',
+                InvocationType='RequestResponse',
+                Payload=json.dumps(request.parameters)
+            )
+            result = json.loads(response['Payload'].read())
+        else:
+            # Use mock response for demo
+            result = {'body': mock_invoice_generate()}
         
         task = TaskResponse(
             task_id=task_id,
@@ -138,19 +139,20 @@ async def generate_invoice(request: TaskRequest):
 async def score_lead(request: TaskRequest):
     task_id = f"lead_{datetime.now(timezone.utc).timestamp()}"
     
-    if not lambda_client:
-        logger.error("Lambda client not initialized")
-        raise HTTPException(status_code=503, detail="Service unavailable")
-    
     try:
         logger.info(f"Processing lead scoring: {task_id}")
-        response = lambda_client.invoke(
-            FunctionName='lead-scorer',
-            InvocationType='RequestResponse',
-            Payload=json.dumps(request.parameters)
-        )
         
-        result = json.loads(response['Payload'].read())
+        if lambda_client:
+            response = lambda_client.invoke(
+                FunctionName='lead-scorer',
+                InvocationType='RequestResponse',
+                Payload=json.dumps(request.parameters)
+            )
+            result = json.loads(response['Payload'].read())
+        else:
+            # Use mock response for demo
+            company_size = request.parameters.get('lead_data', {}).get('company_size', 1500)
+            result = {'body': mock_lead_score(company_size)}
         
         task = TaskResponse(
             task_id=task_id,
