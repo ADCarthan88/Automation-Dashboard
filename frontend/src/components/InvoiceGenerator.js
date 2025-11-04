@@ -11,9 +11,7 @@ import {
   Grid
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:8000';
+import apiClient from '../utils/api';
 
 function InvoiceGenerator() {
   const navigate = useNavigate();
@@ -35,21 +33,30 @@ function InvoiceGenerator() {
       return;
     }
 
+    const validItems = items.filter(item => 
+      item.description.trim() && item.quantity > 0 && item.price >= 0
+    );
+
+    if (validItems.length === 0) {
+      setError('Please add at least one valid item');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/tasks/invoice-generate`, {
+      const response = await apiClient.post('/tasks/invoice-generate', {
         task_type: 'invoice_generate',
         parameters: {
           client_info: clientInfo,
-          items: items
+          items: validItems
         }
       });
 
       setResult(response.data.result);
     } catch (err) {
-      setError('Failed to generate invoice: ' + err.message);
+      setError('Failed to generate invoice: ' + (err.response?.data?.detail || err.message));
     } finally {
       setLoading(false);
     }
@@ -84,6 +91,8 @@ function InvoiceGenerator() {
             <TextField
               fullWidth
               label="Client Name"
+              placeholder="Enter client name"
+              required
               value={clientInfo.name}
               onChange={(e) => setClientInfo({...clientInfo, name: e.target.value})}
             />
@@ -91,7 +100,9 @@ function InvoiceGenerator() {
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
-              label="Email"
+              label="Email Address"
+              placeholder="client@example.com"
+              type="email"
               value={clientInfo.email}
               onChange={(e) => setClientInfo({...clientInfo, email: e.target.value})}
             />
@@ -99,7 +110,8 @@ function InvoiceGenerator() {
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
-              label="Address"
+              label="Billing Address"
+              placeholder="123 Main St, City, State 12345"
               value={clientInfo.address}
               onChange={(e) => setClientInfo({...clientInfo, address: e.target.value})}
             />
@@ -114,7 +126,9 @@ function InvoiceGenerator() {
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Description"
+                label="Item Description"
+                placeholder="Service or product description"
+                required
                 value={item.description}
                 onChange={(e) => updateItem(index, 'description', e.target.value)}
               />
@@ -124,17 +138,19 @@ function InvoiceGenerator() {
                 fullWidth
                 label="Quantity"
                 type="number"
+                inputProps={{ min: 1 }}
                 value={item.quantity}
-                onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value))}
+                onChange={(e) => updateItem(index, 'quantity', Math.max(1, parseInt(e.target.value) || 1))}
               />
             </Grid>
             <Grid item xs={6} md={3}>
               <TextField
                 fullWidth
-                label="Price"
+                label="Unit Price ($)"
                 type="number"
+                inputProps={{ min: 0, step: 0.01 }}
                 value={item.price}
-                onChange={(e) => updateItem(index, 'price', parseFloat(e.target.value))}
+                onChange={(e) => updateItem(index, 'price', Math.max(0, parseFloat(e.target.value) || 0))}
               />
             </Grid>
           </Grid>

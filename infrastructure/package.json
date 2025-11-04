@@ -1,5 +1,5 @@
 {
-  "name": "automation-dashboard-infrastructure",
+  "name": "@adamcarthan/automation-dashboard-infrastructure",
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {

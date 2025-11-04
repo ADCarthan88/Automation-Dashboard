@@ -10,9 +10,7 @@ import {
   CircularProgress
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:8000';
+import apiClient from '../utils/api';
 
 function EmailParser() {
   const navigate = useNavigate();
@@ -31,7 +29,7 @@ function EmailParser() {
     setError('');
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/tasks/email-parse`, {
+      const response = await apiClient.post('/tasks/email-parse', {
         task_type: 'email_parse',
         parameters: {
           email_content: emailContent
@@ -40,7 +38,7 @@ function EmailParser() {
 
       setResult(response.data.result);
     } catch (err) {
-      setError('Failed to parse email: ' + err.message);
+      setError('Failed to parse email: ' + (err.response?.data?.detail || err.message));
     } finally {
       setLoading(false);
     }
@@ -62,6 +60,7 @@ function EmailParser() {
           multiline
           rows={10}
           label="Email Content"
+          placeholder="Paste your email content here..."
           value={emailContent}
           onChange={(e) => setEmailContent(e.target.value)}
           sx={{ mb: 3 }}

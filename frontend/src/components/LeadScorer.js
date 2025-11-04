@@ -17,9 +17,7 @@ import {
   Checkbox
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:8000';
+import apiClient from '../utils/api';
 
 function LeadScorer() {
   const navigate = useNavigate();
@@ -35,11 +33,22 @@ function LeadScorer() {
   const [error, setError] = useState('');
 
   const handleScore = async () => {
+    // Validate required fields
+    if (leadData.company_size < 0) {
+      setError('Company size cannot be negative');
+      return;
+    }
+
+    if (leadData.budget < 0) {
+      setError('Budget cannot be negative');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/tasks/lead-score`, {
+      const response = await apiClient.post('/tasks/lead-score', {
         task_type: 'lead_score',
         parameters: {
           lead_data: leadData
@@ -48,7 +57,7 @@ function LeadScorer() {
 
       setResult(response.data.result);
     } catch (err) {
-      setError('Failed to score lead: ' + err.message);
+      setError('Failed to score lead: ' + (err.response?.data?.detail || err.message));
     } finally {
       setLoading(false);
     }
@@ -71,8 +80,10 @@ function LeadScorer() {
               fullWidth
               label="Company Size (employees)"
               type="number"
+              inputProps={{ min: 0 }}
+              placeholder="Number of employees"
               value={leadData.company_size}
-              onChange={(e) => setLeadData({...leadData, company_size: parseInt(e.target.value)})}
+              onChange={(e) => setLeadData({...leadData, company_size: Math.max(0, parseInt(e.target.value) || 0)})}
             />
           </Grid>
           <Grid item xs={12} md={6}>
@@ -94,10 +105,12 @@ function LeadScorer() {
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
-              label="Budget ($)"
+              label="Project Budget ($)"
               type="number"
+              inputProps={{ min: 0, step: 1000 }}
+              placeholder="Available budget in USD"
               value={leadData.budget}
-              onChange={(e) => setLeadData({...leadData, budget: parseFloat(e.target.value)})}
+              onChange={(e) => setLeadData({...leadData, budget: Math.max(0, parseFloat(e.target.value) || 0)})}
             />
           </Grid>
           <Grid item xs={12} md={6}>
